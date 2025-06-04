@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "build:ubuntu-snapshot": "node scripts/generate-ubuntu-snapshot.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -66,6 +67,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@webcontainer/snapshot": "^0.1.0",
     "postcss": "^8",
     "tailwindcss": "^3.4.17",
     "typescript": "^5"
