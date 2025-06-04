@@ -4,6 +4,7 @@ const fsSync = require('fs');
 const path = require('path');
 const https = require('https');
 const { snapshot } = require('@webcontainer/snapshot');
+const lzma = require('lzma-native');
 
 // Download file helper
 async function downloadFile(url, dest) {
@@ -24,37 +25,51 @@ async function downloadFile(url, dest) {
 
 // Extract tar helper (handles .tar.xz by decompressing first)
 async function extractTar(tarXzPath, destDir) {
-  const { exec } = require('child_process');
-  const tar = require('tar');
-  const tarPath = tarXzPath.replace(/\.xz$/, '');
+  const tar = require('tar'); // Keep tar import
+
   try {
-    // Decompress .xz if needed
+    await fs.mkdir(destDir, { recursive: true }); // Ensure destination directory exists
+
     if (tarXzPath.endsWith('.tar.xz')) {
-      if (!fsSync.existsSync(tarPath)) {
-        console.log('Decompressing .tar.xz to .tar...');
-        await new Promise((resolve, reject) => {
-          exec(`xz -dk "${tarXzPath}"`, (error, stdout, stderr) => {
-            if (error) {
-              reject(new Error(`xz decompression failed: ${stderr || error.message}`));
-            } else {
-              resolve();
-            }
-          });
-        });
-        console.log('Decompression complete.');
-      } else {
-        console.log('.tar already exists, skipping decompression.');
-      }
-    }
-    await fs.mkdir(destDir, { recursive: true });
-    await tar.x({ file: tarPath, cwd: destDir, strip: 1 });
-  } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND') {
-      console.error("The 'tar' package is required. Please install it with: npm install tar");
-      process.exit(1);
+      console.log(`Decompressing ${tarXzPath} using lzma-native...`);
+      const compressedData = await fs.readFile(tarXzPath);
+      const decompressedData = await lzma.decompress(compressedData);
+      console.log('Decompression complete. Extracting .tar data...');
+
+      const { Readable } = require('stream');
+      const extractStream = tar.x({ cwd: destDir, strip: 1 });
+      const readStream = new Readable();
+      readStream.push(decompressedData);
+      readStream.push(null);
+
+      await new Promise((resolve, reject) => {
+        readStream.pipe(extractStream)
+          .on('finish', resolve)
+          .on('error', reject);
+      });
+
+      console.log('Extraction from decompressed stream complete.');
+
+    } else if (tarXzPath.endsWith('.tar')) { // Handle plain .tar files too
+      console.log(`Extracting plain .tar file: ${tarXzPath}`);
+      await tar.x({ file: tarXzPath, cwd: destDir, strip: 1 });
+      console.log('Extraction complete.');
     } else {
-      throw err;
+      throw new Error('Unsupported archive format. Only .tar.xz and .tar are supported.');
     }
+
+  } catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND' && err.message.includes("'tar'")) {
+      console.error("The 'tar' package is required. Please install it with: pnpm install tar");
+      process.exit(1);
+    } else if (err.code === 'MODULE_NOT_FOUND' && err.message.includes("'lzma-native'")) {
+      // This case should ideally not be hit if pnpm add was successful and node_modules are correctly loaded.
+      console.error("The 'lzma-native' package is required. Please install it with: pnpm install lzma-native");
+      process.exit(1);
+    }
+    // Add more specific error handling for lzma decompression if needed
+    console.error(`Error during extraction: ${err.message}`);
+    throw err; // Re-throw the error to be caught by the caller
   }
 }
 
@@ -101,8 +116,15 @@ async function generateSnapshot() {
 
     // Extract
     console.log('Extracting Ubuntu image...');
-    await extractTar(UBUNTU_IMAGE_LOCAL, sourcePath);
-    console.log('Extraction complete.');
+    try {
+      await extractTar(UBUNTU_IMAGE_LOCAL, sourcePath);
+      console.log('Extraction complete.'); // Only log if extractTar succeeds
+    } catch (extractionError) {
+      console.error(`Failed to extract Ubuntu image: ${extractionError.message}`);
+      // Optionally, log the full error object for more details if needed in debugging
+      // console.error(extractionError);
+      process.exit(1); // Exit if extraction fails
+    }
   }
 
   // Step 2: Generate snapshot as before
