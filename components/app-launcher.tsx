@@ -22,8 +22,15 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import TerminalApp from "./apps/terminal-app" // Import the new TerminalApp
+// import TerminalApp from "./apps/terminal-app" // Removed static import
 import { Button } from "@/components/ui/button"
+import dynamic from 'next/dynamic' // Added dynamic import
+
+// Dynamically import TerminalApp
+const TerminalApp = dynamic(() => import('./apps/terminal-app'), {
+  ssr: false,
+  loading: () => <p>Loading Terminal...</p>
+});
 
 interface App {
   id: string
