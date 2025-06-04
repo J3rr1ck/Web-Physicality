@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Terminal } from 'xterm';
+import type { WritableStreamDefaultWriter } from '@webcontainer/api';
 import { FitAddon } from 'xterm-addon-fit';
 import 'xterm/css/xterm.css';
 import { WebContainer } from '@webcontainer/api';
@@ -10,6 +11,7 @@ const TerminalApp: React.FC<TerminalAppProps> = ({}) => {
   const terminalRef = useRef<HTMLDivElement>(null);
   const xtermRef = useRef<Terminal | null>(null);
   const webContainerInstanceRef = useRef<WebContainer | null>(null);
+  const writerRef = useRef<WritableStreamDefaultWriter<string> | null>(null);
 
   useEffect(() => {
     const initTerminal = async () => {
@@ -60,10 +62,19 @@ const TerminalApp: React.FC<TerminalAppProps> = ({}) => {
           const shellProcess = await webContainerInstance.spawn('jsh');
           term.write('Shell process started.\r\n');
 
+          writerRef.current = shellProcess.input.getWriter();
 
           // Pipe terminal input to the shell process
-          term.onData(data => {
-            shellProcess.input.write(data);
+          term.onData(async (data) => {
+            if (writerRef.current) {
+              try {
+                await writerRef.current.write(data);
+              } catch (error) {
+                console.error("Error writing to shell process input:", error);
+                // Optionally, provide feedback to the terminal user, e.g.:
+                // term.write('\r\nError writing to process input.\r\n');
+              }
+            }
           });
 
           // Pipe shell output to the terminal
@@ -76,6 +87,14 @@ const TerminalApp: React.FC<TerminalAppProps> = ({}) => {
           // Optional: Handle shell process exit
           shellProcess.exit.then((exitCode) => {
             term.write(`Shell process exited with code ${exitCode}\r\n`);
+            if (writerRef.current) {
+              try {
+                writerRef.current.releaseLock();
+              } catch (e) {
+                console.warn("Failed to release lock on shell process exit:", e);
+              }
+              writerRef.current = null;
+            }
           });
 
         } catch (error) {
@@ -97,6 +116,19 @@ const TerminalApp: React.FC<TerminalAppProps> = ({}) => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
+
+      if (writerRef.current) {
+        try {
+          // Attempt to close the writer first if it's not already closing
+          // This might not always be necessary depending on the shellProcess behavior on teardown
+          // await writerRef.current.close();
+          writerRef.current.releaseLock();
+        } catch (e) {
+          console.warn("Failed to release lock on component unmount:", e);
+        }
+        writerRef.current = null;
+      }
+
       // Optional: Dispose of the terminal and WebContainer instances
       // xtermRef.current?.dispose();
       // xtermRef.current = null;
