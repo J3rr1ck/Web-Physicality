@@ -13,6 +13,13 @@ import { CalendarApp } from "@/components/apps/calendar-app"
 import { WeatherApp } from "@/components/apps/weather-app"
 import { ChatApp } from "@/components/apps/chat-app"
 import { FilesApp } from "@/components/apps/files-app"
+import dynamic from 'next/dynamic';
+
+// Dynamically import TerminalApp
+const TerminalApp = dynamic(() => import('@/components/apps/terminal-app'), {
+  ssr: false,
+  loading: () => <p>Loading Terminal...</p>
+});
 
 interface CardData {
   id: string
@@ -80,6 +87,8 @@ export function useWebOS() {
             return <ChatApp />
           case "files":
             return <FilesApp />
+          case "webcontainer-terminal":
+            return <TerminalApp />;
           default:
             return (
               <div className="p-8 text-center text-white/60">
@@ -107,6 +116,7 @@ export function useWebOS() {
           chat: "Chat",
           files: "Files",
           terminal: "Terminal",
+          "webcontainer-terminal": "Web Terminal",
           store: "App Store",
         }
         return titles[appId] || "App"
