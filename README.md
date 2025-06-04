@@ -182,7 +182,7 @@ Apply living glass effects using CSS classes:
 
 ## License
 
-MIT License - see [LICENSE](LICENSE) for details.
+GPL-3 License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
