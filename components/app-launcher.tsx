@@ -22,6 +22,7 @@ import {
   ShoppingBag,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
+import TerminalApp from "./apps/terminal-app" // Import the new TerminalApp
 import { Button } from "@/components/ui/button"
 
 interface App {
@@ -31,6 +32,9 @@ interface App {
   category: string
   description: string
   gradient: string
+  component?: React.FC<any> // Add component to the interface (optional for existing apps)
+  width?: number              // Add width to the interface (optional)
+  height?: number             // Add height to the interface (optional)
 }
 
 interface AppLauncherProps {
@@ -169,6 +173,17 @@ export function AppLauncher({ onClose, onOpenApp }: AppLauncherProps) {
       category: "System",
       description: "Download new apps",
       gradient: "from-blue-600 to-indigo-700",
+    },
+    {
+      id: "webcontainer-terminal",
+      name: "Web Terminal",
+      icon: () => <p>{'>_'}</p>, // Placeholder icon
+      category: "Development",
+      description: "WebContainer-based terminal",
+      gradient: "from-gray-700 to-gray-900",
+      component: TerminalApp, // Assign the component
+      width: 700,             // Default width
+      height: 500,            // Default height
     },
   ]
 
