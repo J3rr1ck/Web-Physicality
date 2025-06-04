@@ -76,7 +76,7 @@ export function NotificationCenter({ notifications, onDismiss }: NotificationCen
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsOpen(false)}
-                className="text-white/70 hover:text-white hover:bg-white/10"
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
                 <X className="w-4 h-4" />
               </Button>
@@ -110,7 +110,7 @@ export function NotificationCenter({ notifications, onDismiss }: NotificationCen
                                   size="sm"
                                   variant="outline"
                                   onClick={action.action}
-                                  className="text-xs border-white/20 text-white hover:bg-white/10"
+                                  className="bg-white/10 border-white/20 text-white hover:bg-white/20 text-xs"
                                 >
                                   {action.label}
                                 </Button>
@@ -122,7 +122,7 @@ export function NotificationCenter({ notifications, onDismiss }: NotificationCen
                           variant="ghost"
                           size="sm"
                           onClick={() => onDismiss(notification.id)}
-                          className="text-white/50 hover:text-white hover:bg-white/10"
+                          className="bg-white/10 border-white/20 text-white hover:bg-white/20"
                         >
                           <X className="w-4 h-4" />
                         </Button>

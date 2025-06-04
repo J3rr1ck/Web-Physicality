@@ -114,7 +114,7 @@ export function SystemSettings({ onClose }: SystemSettingsProps) {
             variant="ghost"
             size="sm"
             onClick={onClose}
-            className="text-white/70 hover:text-white hover:bg-white/10"
+            className="bg-white/10 border-white/20 text-white hover:bg-white/20"
           >
             <X className="w-5 h-5" />
           </Button>
@@ -179,7 +179,7 @@ export function SystemSettings({ onClose }: SystemSettingsProps) {
           <div className="flex items-center justify-between">
             <div className="text-white/60 text-sm">WebOS AI v1.0 • Built with privacy in mind</div>
             <div className="flex space-x-2">
-              <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
+              <Button variant="outline" size="sm" className="bg-white/10 border-white/20 text-white hover:bg-white/20">
                 Reset to Defaults
               </Button>
               <Button size="sm" className="bg-blue-500 hover:bg-blue-600 text-white">
